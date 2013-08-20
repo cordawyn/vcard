@@ -1,4 +1,4 @@
-vcard
-=====
+# vcard
 
-Simple vCard processor for Guile
+Simple vCard processor for Guile.
+
