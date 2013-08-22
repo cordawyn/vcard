@@ -41,10 +41,11 @@
          (string-append
           (string-upcase (symbol->string param-name))
           (if (pair? param-values)
-              (string-append
-               ";" (vcard-properties->string (cdr param-values))
-               ":" (serialize-vcard-value (car param-values)))
-              (string-append ":" (serialize-vcard-value param-values)))
+              (let ((type (assoc-ref 'value param-values)))
+                (string-append
+                 ";" (vcard-properties->string (cdr param-values))
+                 ":" (serialize-vcard-value (or (and type (string->symbol (string-downcase type))) 'text) (car param-values))))
+              (string-append ":" (serialize-vcard-value 'text param-values)))
           "\n\r")))
      (vcard-parameters vc))
     "")
@@ -56,13 +57,18 @@
     (lambda (val)
       (string-append
        (string-upcase (symbol->string (car val))) "="
-       (serialize-vcard-value (cdr val))))
+       (cdr val)))
     properties)
    ";"))
 
-(define (serialize-vcard-value val)
-  ;; TODO
-  (escape-vcard-value val))
+(define (serialize-vcard-value type val)
+  (case type
+    ;; TODO
+    (else
+     (escape-vcard-value
+      (or
+       (and (string? val) val)
+       (format #f "~s" val))))))
 
 (define (escape-vcard-value v)
   v)
