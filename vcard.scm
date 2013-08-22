@@ -1,14 +1,16 @@
 ;; vCard processing library
 ;; Corresponds to vCard specification 4.0, RFC 6350
-
+;; (https://tools.ietf.org/rfc/rfc6350.txt)
 (define-module (vcard)
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-9 gnu)
 
   #:export (make-vcard
+            vcard-parameters
             vcard->string))
 
-;; Parameters like:
+;; vCard record. Constructing it requires only one argument:
+;; parameters. Parameters like:
 ;;
 ;; TITLE;ALTID=1;LANGUAGE=en:Boss
 ;; PID:12345
@@ -19,7 +21,6 @@
 ;;   (title "Boss" ((altid . 1) (language . "en")))
 ;;   (pid . "12345")
 ;; )
-
 (define-record-type vcard
   (make-vcard parameters)
   vcard?
@@ -42,8 +43,8 @@
           (if (pair? param-values)
               (string-append
                ";" (vcard-properties->string (cdr param-values))
-               ":" (typecast-vcard-param (car param-values)))
-              (string-append ":" (typecast-vcard-param param-values)))
+               ":" (serialize-vcard-value (car param-values)))
+              (string-append ":" (serialize-vcard-value param-values)))
           "\n\r")))
      (vcard-parameters vc))
     "")
@@ -55,10 +56,13 @@
     (lambda (val)
       (string-append
        (string-upcase (symbol->string (car val))) "="
-       (cdr val)))
+       (serialize-vcard-value (cdr val))))
     properties)
    ";"))
 
-(define (typecast-vcard-param value)
+(define (serialize-vcard-value val)
   ;; TODO
-  value)
+  (escape-vcard-value val))
+
+(define (escape-vcard-value v)
+  v)
