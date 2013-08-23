@@ -56,10 +56,11 @@
 (define (vcard-properties->string properties)
   (string-join
    (map
-    (lambda (val)
-      (string-append
-       (string-upcase (symbol->string (car val))) "="
-       (cdr val)))
+    (lambda (attr)
+      (let ((name (car attr)) (value (cdr attr)))
+        (string-append
+         (string-upcase (symbol->string name)) "="
+         (stringify value))))
     properties)
    ";"))
 
@@ -83,9 +84,13 @@
             (write val))))
     (else
      (escape-vcard-value
-      (or
-       (and (string? val) val)
-       (format #f "~s" val))))))
+      (stringify val)))))
 
 (define (escape-vcard-value v)
+  ;; TODO
   v)
+
+(define (stringify value)
+  (or
+   (and (string? value) value)
+   (format #f "~s" value)))
