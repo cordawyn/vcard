@@ -41,7 +41,8 @@
          (string-append
           (string-upcase (symbol->string param-name))
           (if (pair? param-values)
-              (let ((type (assoc-ref 'value (cadr param-values))))
+              (let ((type (assoc-ref (cadr param-values) 'value)))
+                (display (cadr param-values))
                 (string-append
                  ";" (vcard-properties->string (cadr param-values))
                  ":" (serialize-vcard-value (or (and type (string->symbol (string-downcase type))) 'text) (car param-values))))
