@@ -4,6 +4,8 @@
 (define-module (vcard)
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-9 gnu)
+  #:use-module (srfi srfi-19)
+  #:use-module (web uri)
 
   #:export (make-vcard
             vcard-parameters
@@ -64,6 +66,21 @@
 (define (serialize-vcard-value type val)
   (case type
     ;; TODO
+    ('uri
+     (uri->string val))
+    ('date
+     (if (date? val)
+         (date->string val "~Y~m~d")
+         ;; TODO: date as an incomplete triple?
+         (write val)))
+    ('time
+     (cond ((date? val)
+            (date->string val "~2"))
+           ((time? val)
+            (error "Handling of time objects is not implemented yet. Try date."))
+           ;; TODO: incomplete time/date (hours or minutes only, etc.)
+           (else
+            (write val))))
     (else
      (escape-vcard-value
       (or
