@@ -30,7 +30,7 @@
 
 (set-record-type-printer! vcard
                           (lambda (record port)
-                            (display (vcard->string record) port)))
+                            (display "#<vcard ...>\n" port)))
 
 (define (vcard->string vc)
   (string-append
