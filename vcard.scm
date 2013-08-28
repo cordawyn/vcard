@@ -6,9 +6,12 @@
   #:use-module (srfi srfi-9 gnu)
   #:use-module (srfi srfi-19)
   #:use-module (web uri)
+  #:use-module (system base lalr)
+  #:use-module (ice-9 rdelim) ;; provides "read-line"
 
   #:export (make-vcard
             vcard-parameters
+            parse-vcard
             vcard->string))
 
 ;; vCard record. Constructing it requires only one argument:
@@ -112,3 +115,33 @@
 (define (escape-vcard-value v)
   ;; TODO
   v)
+
+(define (parse-vcard port)
+  (make-vcard
+   (vcard-parser
+    (vcard-lexer port)
+    vcard-parse-error)))
+
+(define vcard-parser
+  (lalr-parser
+   (TEXT PDELIM)
+   (VCARD (VCARD PARAM) : (cons $2 $1)
+          (PARAM) : (list $1)
+          () : 0)
+   ;; TODO: needs more sophisticated grammar
+   (PARAM (TEXT PDELIM TEXT) : (cons (string->symbol (string-downcase $1)) $3))))
+
+(define (vcard-lexer port)
+  (lambda ()
+    ;; TODO: do a proper lexer
+    (let ((token (read-line port)))
+      (if (eof-object? token)
+          (make-lexical-token '*eoi* #f #f)
+          (cond
+           ((equal? token ":")
+            (make-lexical-token 'PDELIM #f token))
+           (else
+            (make-lexical-token 'TEXT #f (string-downcase token))))))))
+
+(define* (vcard-parse-error msg #:optional tok)
+  (display (string-append "[PARSER] " msg ": " (format #f "~s" tok) "\n")))
