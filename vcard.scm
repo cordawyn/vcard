@@ -116,32 +116,46 @@
   ;; TODO
   v)
 
+(define (typecast-vcard-value v type)
+  ;; TODO
+  v)
+
 (define (parse-vcard port)
-  (make-vcard
-   (vcard-parser
-    (vcard-lexer port)
-    vcard-parse-error)))
+  (vcard-parser
+   (vcard-lexer port)
+   vcard-parse-error))
 
 (define vcard-parser
   (lalr-parser
-   (TEXT PDELIM)
+   (TEXT PDELIM ADELIM EQL)
    (VCARD (VCARD PARAM) : (cons $2 $1)
           (PARAM) : (list $1)
           () : 0)
-   ;; TODO: needs more sophisticated grammar
-   (PARAM (TEXT PDELIM TEXT) : (cons (string->symbol (string-downcase $1)) $3))))
+   (PARAM (TEXT PDELIM TEXT) : (cons (string->symbol (string-downcase $1)) (typecast-vcard-value $3 #f))
+          (TEXT ATTRS PDELIM TEXT) : (list (string->symbol (string-downcase $1)) $4 (typecast-vcard-value $2 #f)))
+   (ATTRS (ATTRS ATTR) : (cons $2 $1)
+          (ATTR) : (list $1)
+          () : 0)
+   (ATTR (ADELIM TEXT EQL TEXT) : (cons (string->symbol (string-downcase $2)) (string-downcase $4)))))
 
 (define (vcard-lexer port)
   (lambda ()
-    ;; TODO: do a proper lexer
+    ;; TODO: do a proper (char-based) lexer
     (let ((token (read-line port)))
       (if (eof-object? token)
           (make-lexical-token '*eoi* #f #f)
           (cond
            ((equal? token ":")
             (make-lexical-token 'PDELIM #f token))
+           ((equal? token ";")
+            (make-lexical-token 'ADELIM #f token))
+           ((equal? token "=")
+            (make-lexical-token 'EQL #f token))
            (else
-            (make-lexical-token 'TEXT #f (string-downcase token))))))))
+            (make-lexical-token 'TEXT #f token)))))))
 
 (define* (vcard-parse-error msg #:optional tok)
   (display (string-append "[PARSER] " msg ": " (format #f "~s" tok) "\n")))
+
+(define (symbolize-vname n)
+  (string->symbol (string-downcase n)))
