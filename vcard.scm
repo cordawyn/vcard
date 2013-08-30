@@ -112,13 +112,13 @@
      (escape-vcard-value
       (format #f "~a" val)))))
 
-(define (escape-vcard-value v)
+(define (escape-vcard-value val)
   ;; TODO
-  v)
+  val)
 
-(define (typecast-vcard-value v type)
+(define (typecast-vcard-value type val)
   ;; TODO
-  v)
+  val)
 
 (define (parse-vcard port)
   (vcard-parser
@@ -131,8 +131,8 @@
    (VCARD (VCARD PARAM) : (cons $2 $1)
           (PARAM) : (list $1)
           () : 0)
-   (PARAM (TEXT PDELIM TEXT) : (cons (symbolize-vname $1) (typecast-vcard-value $3 #f))
-          (TEXT ATTRS PDELIM TEXT) : (list (symbolize-vname $1) $4 (typecast-vcard-value $2 #f)))
+   (PARAM (TEXT PDELIM TEXT) : (cons (symbolize-vname $1) (typecast-vcard-value #f $3))
+          (TEXT ATTRS PDELIM TEXT) : (list (symbolize-vname $1) $4 (typecast-vcard-value #f $2)))
    (ATTRS (ATTRS ATTR) : (cons $2 $1)
           (ATTR) : (list $1)
           () : 0)
