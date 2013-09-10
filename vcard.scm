@@ -140,22 +140,43 @@
 
 (define (vcard-lexer port)
   (lambda ()
-    ;; TODO: do a proper (char-based) lexer
-    (let ((token (read-line port)))
-      (if (eof-object? token)
-          (make-lexical-token '*eoi* #f #f)
-          (cond
-           ((equal? token ":")
-            (make-lexical-token 'PDELIM #f token))
-           ((equal? token ";")
-            (make-lexical-token 'ADELIM #f token))
-           ((equal? token "=")
-            (make-lexical-token 'EQL #f token))
-           (else
-            (make-lexical-token 'TEXT #f token)))))))
+    (let ((c (read-char port)))
+      (cond
+       ((eof-object? c)
+        (make-lexical-token '*eoi* #f #f))
+       ((equal? c #\:)
+        (make-lexical-token 'PDELIM #f ":"))
+       ((equal? c #\;)
+        (make-lexical-token 'ADELIM #f ";"))
+       ((equal? c #\=)
+        (make-lexical-token 'EQL #f "="))
+       ((eq? c #\return)
+        (let ((c1 (read-char port)))
+          (unless (or (eq? #\newline c) (eof-object? c))
+                  (make-lexical-token 'TEXT #f (list->string (cons c1 (get-token port)))))
+          ((vcard-lexer port)))) ;; do nothing now, get next token
+       (else
+        (make-lexical-token 'TEXT #f (list->string (cons c (get-token port)))))))))
 
-(define* (vcard-parse-error msg #:optional tok)
-  (display (string-append "[PARSER] " msg ": " (format #f "~s" tok) "\n")))
+(define (get-token port)
+  (let ((c (read-char port)))
+    (cond
+     ((eof-object? c)
+      '())
+     ((eq? c #\return)
+      (let ((c1 (read-char port)))
+        (unless (or (eq? #\newline c) (eof-object? c))
+                (unread-char c port))
+        '()))
+     ((member c '(#\: #\; #\=))
+      (begin
+        (unread-char c port)
+        '()))
+     (else
+      (cons c (get-token port))))))
+
+(define* (vcard-parse-error msg #:optional token)
+  (format #t "[PARSER] ~a ~s\n" msg token))
 
 (define (symbolize-vname n)
   (string->symbol (string-downcase n)))
