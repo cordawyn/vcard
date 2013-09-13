@@ -7,7 +7,6 @@
   #:use-module (srfi srfi-19)
   #:use-module (web uri)
   #:use-module (system base lalr)
-  #:use-module (ice-9 rdelim) ;; provides "read-line"
 
   #:export (make-vcard
             vcard-parameters
@@ -152,7 +151,7 @@
         (make-lexical-token 'EQL #f "="))
        ((eq? c #\return)
         (let ((c1 (read-char port)))
-          (unless (or (eq? #\newline c) (eof-object? c))
+          (unless (or (eq? #\newline c1) (eof-object? c1))
                   (make-lexical-token 'TEXT #f (list->string (cons c1 (get-token port)))))
           ((vcard-lexer port)))) ;; do nothing now, get next token
        (else
@@ -165,8 +164,8 @@
       '())
      ((eq? c #\return)
       (let ((c1 (read-char port)))
-        (unless (or (eq? #\newline c) (eof-object? c))
-                (unread-char c port))
+        (unless (or (eq? #\newline c1) (eof-object? c1))
+                (unread-char c1 port))
         '()))
      ((member c '(#\: #\; #\=))
       (begin
